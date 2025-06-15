@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <termios.h>
+#include <sys/wait.h>
 #include <glib.h>
 #include <polkit/polkit.h>
 #include <polkitagent/polkitagent.h>
 
-static char *read_password(const char *prompt);
+static char *dmenu_password(const char *prompt);
 
 typedef struct {
     PolkitAgentListener parent_instance;
@@ -36,11 +36,15 @@ on_request(PolkitAgentSession *session,
     
     (void)echo_on; (void)user_data;
     
-    if (strstr(request, "Password")) {
-        password = read_password(request);
-        polkit_agent_session_response(session, password);
-        memset(password, 0, strlen(password));
-        free(password);
+    if (strstr(request, "Password") || strstr(request, "password")) {
+        password = dmenu_password("Password:");
+        if (password) {
+            polkit_agent_session_response(session, password);
+            memset(password, 0, strlen(password));
+            free(password);
+        } else {
+            polkit_agent_session_response(session, "");
+        }
     }
 }
 
@@ -68,29 +72,44 @@ on_completed(PolkitAgentSession *session,
 }
 
 static char *
-read_password(const char *prompt)
+dmenu_password(const char *prompt)
 {
-    struct termios old, new;
-    char *password;
-    int c, i = 0;
+    int pipefd[2];
+    pid_t pid;
+    char *password = NULL;
+    size_t len = 0;
+    FILE *fp;
     
-    password = malloc(256);
-    printf("%s", prompt);
-    fflush(stdout);
+    if (pipe(pipefd) == -1) return NULL;
     
-    tcgetattr(STDIN_FILENO, &old);
-    new = old;
-    new.c_lflag &= ~ECHO;
-    tcsetattr(STDIN_FILENO, TCSANOW, &new);
-    
-    while ((c = getchar()) != '\n' && c != EOF && i < 255) {
-        password[i++] = c;
+    pid = fork();
+    if (pid == -1) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return NULL;
     }
-    password[i] = '\0';
     
-    tcsetattr(STDIN_FILENO, TCSANOW, &old);
-    printf("\n");
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        close(STDIN_FILENO);
+
+        execlp("dmenu", "dmenu", "-p", prompt, NULL);
+        exit(1);
+    }
     
+    close(pipefd[1]);
+    fp = fdopen(pipefd[0], "r");
+    if (fp) {
+        if (getline(&password, &len, fp) > 0) {
+            char *newline = strchr(password, '\n');
+            if (newline) *newline = '\0';
+        }
+        fclose(fp);
+    }
+    
+    waitpid(pid, NULL, 0);
     return password;
 }
 
