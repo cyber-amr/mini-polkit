@@ -33,9 +33,9 @@ on_request(PolkitAgentSession *session,
            gpointer user_data)
 {
     gchar *password;
-    
+
     (void)echo_on; (void)user_data;
-    
+
     if (strstr(request, "Password") || strstr(request, "password")) {
         password = dmenu_password("Password:");
         if (password) {
@@ -54,17 +54,17 @@ on_completed(PolkitAgentSession *session,
              gpointer user_data)
 {
     SimpleAgent *agent = (SimpleAgent *)user_data;
-    
+
     (void)session;
-    
+
     if (gained_authorization) {
         g_task_return_boolean(agent->task, TRUE);
     } else {
-        g_task_return_new_error(agent->task, POLKIT_ERROR, 
-                               POLKIT_ERROR_NOT_AUTHORIZED, 
+        g_task_return_new_error(agent->task, POLKIT_ERROR,
+                               POLKIT_ERROR_NOT_AUTHORIZED,
                                "Authentication failed");
     }
-    
+
     g_object_unref(agent->task);
     agent->task = NULL;
     g_object_unref(agent->session);
@@ -79,16 +79,16 @@ dmenu_password(const char *prompt)
     char *password = NULL;
     size_t len = 0;
     FILE *fp;
-    
+
     if (pipe(pipefd) == -1) return NULL;
-    
+
     pid = fork();
     if (pid == -1) {
         close(pipefd[0]);
         close(pipefd[1]);
         return NULL;
     }
-    
+
     if (pid == 0) {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
@@ -98,7 +98,7 @@ dmenu_password(const char *prompt)
         execlp("dmenu", "dmenu", "-p", prompt, NULL);
         exit(1);
     }
-    
+
     close(pipefd[1]);
     fp = fdopen(pipefd[0], "r");
     if (fp) {
@@ -108,7 +108,7 @@ dmenu_password(const char *prompt)
         }
         fclose(fp);
     }
-    
+
     waitpid(pid, NULL, 0);
     return password;
 }
@@ -142,10 +142,10 @@ initiate_authentication(PolkitAgentListener *listener,
 
     identity = POLKIT_IDENTITY(identities->data);
     agent->session = polkit_agent_session_new(identity, cookie);
-    
+
     g_signal_connect(agent->session, "request", G_CALLBACK(on_request), agent);
     g_signal_connect(agent->session, "completed", G_CALLBACK(on_completed), agent);
-    
+
     polkit_agent_session_initiate(agent->session);
 }
 
@@ -162,7 +162,7 @@ static void
 simple_agent_class_init(SimpleAgentClass *klass)
 {
     PolkitAgentListenerClass *listener_class;
-    
+
     listener_class = POLKIT_AGENT_LISTENER_CLASS(klass);
     listener_class->initiate_authentication = initiate_authentication;
     listener_class->initiate_authentication_finish = initiate_authentication_finish;
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 
     agent = g_object_new(simple_agent_get_type(), NULL);
     subject = polkit_unix_session_new_for_process_sync(getpid(), NULL, &error);
-    
+
     if (!subject) {
         fprintf(stderr, "Failed to get session: %s\n", error->message);
         g_error_free(error);
