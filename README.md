@@ -1,2 +1,2 @@
-# polkit-agent
-Simple and lightweight policy kit agent for `polkit`
+# mini-polkit
+Simple and lightweight policy kit authentication agent for `polkit`
