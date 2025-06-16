@@ -21,7 +21,7 @@ install: $(TARGET)
 	chmod 644 $(MANDIR)/man1/mini-polkit.1
 
 	mkdir -p $(DESTDIR)/etc/xdg/autostart
-	echo '[Desktop Entry]\nName=Polkit dmenu agent\nExec=/usr/local/bin/$(TARGET)\nTerminal=false\nType=Application\nCategories=System;\nStartupNotify=false\nNoDisplay=true' > $(DESTDIR)/etc/xdg/autostart/mini-polkit.desktop
+	echo '[Desktop Entry]\nName=Mini Polkit\nExec=/usr/local/bin/$(TARGET)\nTerminal=false\nType=Application\nCategories=System;\nStartupNotify=false\nNoDisplay=true' > $(DESTDIR)/etc/xdg/autostart/mini-polkit.desktop
 
 uninstall:
 	rm -f $(DESTDIR)/usr/local/bin/$(TARGET)
