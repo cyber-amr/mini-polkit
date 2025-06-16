@@ -13,19 +13,19 @@ $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 install: $(TARGET)
-	mkdir -p $(DESTDIR)/usr/local/bin
-	cp $(TARGET) $(DESTDIR)/usr/local/bin/
+	mkdir -p $(DESTDIR)/usr/bin
+	cp $(TARGET) $(DESTDIR)/usr/bin/
 
 	mkdir -p $(MANDIR)/man1
 	sed "s/VERSION/${VERSION}/g" < mini-polkit.1 > ${MANDIR}/man1/mini-polkit.1
 	chmod 644 $(MANDIR)/man1/mini-polkit.1
 
 	mkdir -p $(DESTDIR)/etc/xdg/autostart
-	echo '[Desktop Entry]\nName=Mini Polkit\nExec=/usr/local/bin/$(TARGET)\nTerminal=false\nType=Application\nCategories=System;\nStartupNotify=false\nNoDisplay=true' > $(DESTDIR)/etc/xdg/autostart/mini-polkit.desktop
+	echo '[Desktop Entry]\nName=Mini Polkit\nExec=/usr/bin/$(TARGET)\nTerminal=false\nType=Application\nCategories=System;\nStartupNotify=false\nNoDisplay=true' > $(DESTDIR)/etc/xdg/autostart/mini-polkit.desktop
     chmod 644 $(DESTDIR)/etc/xdg/autostart/mini-polkit.desktop
 
 uninstall:
-	rm -f $(DESTDIR)/usr/local/bin/$(TARGET)
+	rm -f $(DESTDIR)/usr/bin/$(TARGET)
 	rm -f $(MANDIR)/man1/mini-polkit.1
 	rm -f $(DESTDIR)/etc/xdg/autostart/mini-polkit.desktop
 
