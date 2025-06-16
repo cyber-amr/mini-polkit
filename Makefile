@@ -22,7 +22,7 @@ install: $(TARGET)
 
 	mkdir -p $(DESTDIR)/etc/xdg/autostart
 	echo '[Desktop Entry]\nName=Mini Polkit\nExec=/usr/bin/$(TARGET)\nTerminal=false\nType=Application\nCategories=System;\nStartupNotify=false\nNoDisplay=true' > $(DESTDIR)/etc/xdg/autostart/mini-polkit.desktop
-    chmod 644 $(DESTDIR)/etc/xdg/autostart/mini-polkit.desktop
+	chmod 644 $(DESTDIR)/etc/xdg/autostart/mini-polkit.desktop
 
 uninstall:
 	rm -f $(DESTDIR)/usr/bin/$(TARGET)
