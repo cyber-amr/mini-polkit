@@ -14,7 +14,11 @@ install: $(TARGET)
 	mkdir -p $(HOME)/.config/autostart
 	echo '[Desktop Entry]\nName=Polkit dmenu agent\nExec=/usr/local/bin/$(TARGET)\nTerminal=false\nType=Application\nCategories=System;\nStartupNotify=false\nNoDisplay=true' > $(HOME)/.config/autostart/polkit-agent.desktop
 
+uninstall:
+	rm -f $(DESTDIR)/usr/local/bin/$(TARGET)
+	rm -f $(HOME)/.config/autostart/polkit-agent.desktop
+
 clean:
 	rm -f $(TARGET)
 
-.PHONY: install clean
+.PHONY: install uninstall clean
