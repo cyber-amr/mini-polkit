@@ -189,7 +189,20 @@ int main(int argc, char *argv[])
     }
 
     if (!get_cmd(argc, argv)) {
-        fprintf(stderr, "Usage: %s <command>\n", argv[0]);
+        fprintf(stderr,
+            "Usage: %s <command>\n"
+            "  <command>: shell command to prompt user for password\n\n"
+            "Examples:\n"
+            "  %s rofi -dmenu -password -p 'Password:'\n"
+            "  %s zenity --password --title='Authentication'\n"
+            "  %s \"echo 'Authentication' | dmenu -p 'Password:'\"\n\n"
+            "Note:\n"
+            "  Should be run in an X session (e.g. from ~/.xinitrc)\n"
+            "  Should also run as a background processs using &\n"
+            "  Example:\n"
+            "    %s \"rofi -dmenu -password -p 'Password:'\" &\n",
+            argv[0], argv[0], argv[0], argv[0], argv[0]
+        );
         return 1;
     }
 
