@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <glib.h>
@@ -26,7 +27,14 @@ typedef struct {
 
 static GType simple_agent_get_type(void) G_GNUC_CONST;
 
+static GMainLoop *loop;
+
 G_DEFINE_TYPE(SimpleAgent, simple_agent, POLKIT_AGENT_TYPE_LISTENER);
+
+static void handle_signal(int sig) {
+    (void)sig;
+    g_main_loop_quit(loop);
+}
 
 static void
 on_request(PolkitAgentSession *session,
@@ -178,7 +186,6 @@ simple_agent_init(SimpleAgent *agent)
 
 int main(int argc, char *argv[])
 {
-    GMainLoop *loop;
     SimpleAgent *agent;
     PolkitSubject *subject;
     GError *error = NULL;
@@ -226,6 +233,8 @@ int main(int argc, char *argv[])
     printf("Polkit agent registered\n");
 
     loop = g_main_loop_new(NULL, FALSE);
+    signal(SIGTERM, handle_signal);
+    signal(SIGINT, handle_signal);
     g_main_loop_run(loop);
 
     g_main_loop_unref(loop);
