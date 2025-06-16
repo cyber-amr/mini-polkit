@@ -10,7 +10,9 @@
 #include <polkit/polkit.h>
 #include <polkitagent/polkitagent.h>
 
-static char *dmenu_password(const char *prompt);
+static char *get_password(void);
+
+char *cmd = NULL;
 
 typedef struct {
     PolkitAgentListener parent_instance;
@@ -37,7 +39,7 @@ on_request(PolkitAgentSession *session,
     (void)echo_on; (void)user_data;
 
     if (strstr(request, "Password") || strstr(request, "password")) {
-        password = dmenu_password("Password:");
+        password = get_password();
         if (password) {
             polkit_agent_session_response(session, password);
             memset(password, 0, strlen(password));
@@ -71,45 +73,44 @@ on_completed(PolkitAgentSession *session,
     agent->session = NULL;
 }
 
-static char *
-dmenu_password(const char *prompt)
+static char
+*get_cmd(int argc, char *argv[])
 {
-    int pipefd[2];
-    pid_t pid;
+    if (argc < 2) return NULL;
+
+    size_t len = 0;
+    for (int i = 1; i < argc; i++) len += strlen(argv[i]) + 1;
+
+    cmd = malloc(len + 1);
+    if (!cmd) return NULL;
+
+    cmd[0] = '\0';
+    for (int i = 1; i < argc; i++) {
+        strcat(cmd, argv[i]);
+        if (i < argc - 1)
+            strcat(cmd, " ");
+    }
+
+    return cmd;
+}
+
+static char
+*get_password(void)
+{
+    FILE *fp = popen(cmd, "r");
+    if (!fp) return NULL;
+
     char *password = NULL;
     size_t len = 0;
-    FILE *fp;
 
-    if (pipe(pipefd) == -1) return NULL;
-
-    pid = fork();
-    if (pid == -1) {
-        close(pipefd[0]);
-        close(pipefd[1]);
-        return NULL;
+    if (getline(&password, &len, fp) == -1 || !password || strlen(password) == 0) {
+        free(password);
+        password = NULL;
+    } else {
+        password[strcspn(password, "\n")] = '\0';
     }
 
-    if (pid == 0) {
-        close(pipefd[0]);
-        dup2(pipefd[1], STDOUT_FILENO);
-        close(pipefd[1]);
-        close(STDIN_FILENO);
-
-        execlp("dmenu", "dmenu", "-p", prompt, NULL);
-        exit(1);
-    }
-
-    close(pipefd[1]);
-    fp = fdopen(pipefd[0], "r");
-    if (fp) {
-        if (getline(&password, &len, fp) > 0) {
-            char *newline = strchr(password, '\n');
-            if (newline) *newline = '\0';
-        }
-        fclose(fp);
-    }
-
-    waitpid(pid, NULL, 0);
+    pclose(fp);
     return password;
 }
 
@@ -182,10 +183,13 @@ int main(int argc, char *argv[])
     PolkitSubject *subject;
     GError *error = NULL;
 
-    (void)argc; (void)argv;
-
     if (geteuid() == 0) {
         fprintf(stderr, "Don't run as root\n");
+        return 1;
+    }
+
+    if (!get_cmd(argc, argv)) {
+        fprintf(stderr, "Usage: %s <command>\n", argv[0]);
         return 1;
     }
 
