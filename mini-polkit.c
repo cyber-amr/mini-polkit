@@ -86,20 +86,7 @@ static char
 {
     if (argc < 2) return NULL;
 
-    size_t len = 0;
-    for (int i = 1; i < argc; i++) len += strlen(argv[i]) + 1;
-
-    char *cmd = malloc(len);
-    if (!cmd) return NULL;
-
-    cmd[0] = '\0';
-    for (int i = 1; i < argc; i++) {
-        strcat(cmd, argv[i]);
-        if (i < argc - 1)
-            strcat(cmd, " ");
-    }
-
-    return cmd;
+    return g_strjoinv(" ", &argv[1]);
 }
 
 static char
