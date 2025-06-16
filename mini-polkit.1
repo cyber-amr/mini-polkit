@@ -1,0 +1,62 @@
+.TH MINI-POLKIT 1 "June 2025" "mini-polkit-VERSION"
+.SH NAME
+mini-polkit \- minimal polkit authentication agent
+.SH SYNOPSIS
+.B mini-polkit
+.I prompt-command
+.SH DESCRIPTION
+.B mini-polkit
+is a minimal PolicyKit authentication agent for X11 environments.
+It spawns an external command to prompt for passwords during authentication requests from polkit-enabled applications.
+
+The agent runs as a background service and registers itself with the polkit daemon.
+It handles authentication requests by executing the specified prompt command and passing the entered password to polkit for verification.
+
+.SH ARGUMENTS
+.TP
+.I prompt-command
+External command used to prompt for passwords. Must read from stdin and output password to stdout.
+Common choices include dmenu, rofi, zenity, or any custom script.
+
+.SH SETUP
+Start the agent in your session initialization:
+.PP
+.B ~/.xinitrc
+or
+.B ~/.xprofile:
+.IP
+mini-polkit "rofi -dmenu -password -p 'Password:'" &
+
+.SH EXAMPLES
+.TP
+.B rofi:
+mini-polkit rofi -dmenu -password -p 'Password:'
+.TP
+.B dmenu (native):
+mini-polkit "echo 'Authentication' | dmenu -p 'Password:'"
+.TP
+.B dmenu (password patch):
+mini-polkit dmenu -P -p 'Password:'
+.TP
+.B zenity:
+mini-polkit zenity --password --title='Authentication'
+.TP
+.B custom script:
+mini-polkit "/usr/local/bin/my-password-prompt"
+
+.SH SIGNALS
+.TP
+.B SIGTERM
+Gracefully shutdown and unregister from polkit daemon.
+
+.SH FILES
+No configuration files. Behavior controlled entirely by prompt command.
+
+.SH AUTHOR
+Spirit <amr@programmer.net> (amr-dev.info)
+
+.SH SEE ALSO
+.BR polkit (8),
+.BR policykit-1 (8),
+.BR rofi (1),
+.BR dmenu (1)
