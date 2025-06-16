@@ -11,14 +11,13 @@
 #include <polkit/polkit.h>
 #include <polkitagent/polkitagent.h>
 
-static char *get_password(void);
-
-char *cmd = NULL;
+static char *get_password(char *cmd);
 
 typedef struct {
     PolkitAgentListener parent_instance;
     PolkitAgentSession *session;
     GTask *task;
+    char *cmd;
 } SimpleAgent;
 
 typedef struct {
@@ -42,19 +41,20 @@ on_request(PolkitAgentSession *session,
            gboolean echo_on,
            gpointer user_data)
 {
+    SimpleAgent *agent = (SimpleAgent *)user_data;
     gchar *password;
 
-    (void)echo_on; (void)user_data;
+    (void)echo_on;
 
     if (strstr(request, "Password") || strstr(request, "password")) {
-        password = get_password();
+        password = get_password(agent->cmd);
         if (password) {
             polkit_agent_session_response(session, password);
             memset(password, 0, strlen(password));
-            free(password);
         } else {
             polkit_agent_session_response(session, "");
         }
+        free(password);
     }
 }
 
@@ -89,7 +89,7 @@ static char
     size_t len = 0;
     for (int i = 1; i < argc; i++) len += strlen(argv[i]) + 1;
 
-    cmd = malloc(len + 1);
+    char *cmd = malloc(len);
     if (!cmd) return NULL;
 
     cmd[0] = '\0';
@@ -103,8 +103,10 @@ static char
 }
 
 static char
-*get_password(void)
+*get_password(char *cmd)
 {
+    if (!cmd) return NULL;
+
     FILE *fp = popen(cmd, "r");
     if (!fp) return NULL;
 
@@ -182,6 +184,7 @@ simple_agent_init(SimpleAgent *agent)
 {
     agent->session = NULL;
     agent->task = NULL;
+    agent->cmd = NULL;
 }
 
 int main(int argc, char *argv[])
@@ -189,13 +192,15 @@ int main(int argc, char *argv[])
     SimpleAgent *agent;
     PolkitSubject *subject;
     GError *error = NULL;
+    char *cmd;
 
     if (geteuid() == 0) {
         fprintf(stderr, "Don't run as root\n");
         return 1;
     }
 
-    if (!get_cmd(argc, argv)) {
+    cmd = get_cmd(argc, argv);
+    if (!cmd) {
         fprintf(stderr,
             "Usage: %s <command>\n"
             "  <command>: shell command to prompt user for password\n\n"
@@ -214,11 +219,14 @@ int main(int argc, char *argv[])
     }
 
     agent = g_object_new(simple_agent_get_type(), NULL);
+    agent->cmd = cmd;
     subject = polkit_unix_session_new_for_process_sync(getpid(), NULL, &error);
 
     if (!subject) {
         fprintf(stderr, "Failed to get session: %s\n", error->message);
         g_error_free(error);
+        free(cmd);
+        g_object_unref(agent);
         return 1;
     }
 
@@ -227,6 +235,9 @@ int main(int argc, char *argv[])
                                        subject, NULL, NULL, &error)) {
         fprintf(stderr, "Failed to register agent: %s\n", error->message);
         g_error_free(error);
+        free(cmd);
+        g_object_unref(agent);
+        g_object_unref(subject);
         return 1;
     }
 
@@ -238,6 +249,7 @@ int main(int argc, char *argv[])
     g_main_loop_run(loop);
 
     g_main_loop_unref(loop);
+    free(cmd);
     g_object_unref(agent);
     g_object_unref(subject);
 
