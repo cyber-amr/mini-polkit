@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <glib.h>
+#include <glib/gmem.h>
 #include <polkit/polkit.h>
 #include <polkitagent/polkitagent.h>
 
@@ -236,7 +237,7 @@ int main(int argc, char *argv[])
     g_main_loop_run(loop);
 
     g_main_loop_unref(loop);
-    free(cmd);
+    g_free(cmd);
     g_object_unref(agent);
     g_object_unref(subject);
 
