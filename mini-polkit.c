@@ -229,8 +229,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    printf("Polkit agent registered\n");
-
     loop = g_main_loop_new(NULL, FALSE);
     signal(SIGTERM, handle_signal);
     signal(SIGINT, handle_signal);
