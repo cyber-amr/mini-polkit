@@ -50,7 +50,11 @@ on_request(PolkitAgentSession *session,
     (void)echo_on;
 
     if (strstr(request, "Password") || strstr(request, "password")) {
-        password = get_password(g_strjoinv(shell_escape(agent->current_message), g_strsplit(agent->cmd, "{{MESSAGE}}", -1)));
+        gchar *escaped_msg = shell_escape(agent->current_message);
+        gchar **parts = g_strsplit(agent->cmd, "{{MESSAGE}}", -1);
+        gchar *full_cmd = g_strjoinv(escaped_msg, parts);
+
+        password = get_password(full_cmd);
         if (password) {
             polkit_agent_session_response(session, password);
             memset(password, 0, strlen(password));
@@ -58,7 +62,10 @@ on_request(PolkitAgentSession *session,
         } else {
             polkit_agent_session_response(session, "");
         }
-        free(password);
+
+        g_free(escaped_msg);
+        g_strfreev(parts);
+        g_free(full_cmd);
     }
 }
 
