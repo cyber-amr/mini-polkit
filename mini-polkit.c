@@ -12,6 +12,7 @@
 #include <polkit/polkit.h>
 #include <polkitagent/polkitagent.h>
 
+static char *shell_escape(char *cmd);
 static char *get_password(char *cmd);
 
 typedef struct {
@@ -19,6 +20,7 @@ typedef struct {
     PolkitAgentSession *session;
     GTask *task;
     char *cmd;
+    char *current_message;
 } SimpleAgent;
 
 typedef struct {
@@ -48,7 +50,7 @@ on_request(PolkitAgentSession *session,
     (void)echo_on;
 
     if (strstr(request, "Password") || strstr(request, "password")) {
-        password = get_password(agent->cmd);
+        password = get_password(g_strjoinv(shell_escape(agent->current_message), g_strsplit(agent->cmd, "{{MESSAGE}}", -1)));
         if (password) {
             polkit_agent_session_response(session, password);
             memset(password, 0, strlen(password));
@@ -90,6 +92,22 @@ static char
     return g_strjoinv(" ", &argv[1]);
 }
 
+static char *
+shell_escape(char *str) {
+    GString *escaped = g_string_new("");
+
+    for (const char *p = str; *p; p++) {
+        switch (*p) {
+            case '"':  g_string_append(escaped, "ʺ"); break;  // ʺ
+            case '\'': g_string_append(escaped, "ʹ"); break;  // ʹ
+            case '`':  g_string_append(escaped, "ˋ"); break;  // ˋ
+            default:   g_string_append_c(escaped, *p);   break;
+        }
+    }
+
+    return g_string_free(escaped, FALSE);
+}
+
 static char
 *get_password(char *cmd)
 {
@@ -127,9 +145,12 @@ initiate_authentication(PolkitAgentListener *listener,
     SimpleAgent *agent = (SimpleAgent *)listener;
     PolkitIdentity *identity;
 
-    (void)action_id; (void)message; (void)icon_name; (void)details;
+    (void)action_id; (void)icon_name; (void)details;
 
     agent->task = g_task_new(listener, cancellable, callback, user_data);
+
+    g_free(agent->current_message);
+    agent->current_message = g_strdup(message ? message : "Authentication required");
 
     if (!identities) {
         g_task_return_new_error(agent->task, POLKIT_ERROR, POLKIT_ERROR_FAILED,
@@ -191,16 +212,17 @@ int main(int argc, char *argv[])
     if (!cmd) {
         fprintf(stderr,
             "Usage: %s <command>\n"
-            "  <command>: shell command to prompt user for password\n\n"
+            "  <command>: shell command to prompt user for password\n"
+            "  Use {{MESSAGE}} to include the polkit prompt message\n\n"
             "Examples:\n"
-            "  %s rofi -dmenu -password -p 'Password:'\n"
-            "  %s zenity --password --title='Authentication'\n"
-            "  %s \"echo 'Authentication' | dmenu -p 'Password:'\"\n\n"
+            "  %s \"rofi -dmenu -password\"\n"
+            "  %s \"zenity --password --title='{{MESSAGE}}'\"\n"
+            "  %s \"echo '{{MESSAGE}}' | dmenu -p 'Password:'\"\n\n"
             "Note:\n"
             "  Should be run in an X session (e.g. from ~/.xinitrc)\n"
             "  Should also run as a background processs using &\n"
             "  Example:\n"
-            "    %s \"rofi -dmenu -password -p 'Password:'\" &\n",
+            "    %s \"rofi -dmenu -password -p '{{MESSAGE}}'\" &\n",
             argv[0], argv[0], argv[0], argv[0], argv[0]
         );
         return 1;
