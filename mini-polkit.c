@@ -135,6 +135,16 @@ get_password(const char *cmd)
 }
 
 static void
+simple_agent_finalize(GObject *object)
+{
+    SimpleAgent *agent = (SimpleAgent *)object;
+
+    g_free(agent->current_message);
+
+    G_OBJECT_CLASS(simple_agent_parent_class)->finalize(object);
+}
+
+static void
 initiate_authentication(PolkitAgentListener *listener,
                        const gchar *action_id,
                        const gchar *message,
@@ -185,7 +195,10 @@ initiate_authentication_finish(PolkitAgentListener *listener,
 static void
 simple_agent_class_init(SimpleAgentClass *klass)
 {
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
     PolkitAgentListenerClass *listener_class;
+
+    object_class->finalize = simple_agent_finalize;
 
     listener_class = POLKIT_AGENT_LISTENER_CLASS(klass);
     listener_class->initiate_authentication = initiate_authentication;
@@ -198,6 +211,7 @@ simple_agent_init(SimpleAgent *agent)
     agent->session = NULL;
     agent->task = NULL;
     agent->cmd = NULL;
+    agent->current_message = NULL;
 }
 
 int main(int argc, char *argv[])
