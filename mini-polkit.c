@@ -12,7 +12,7 @@
 #include <polkit/polkit.h>
 #include <polkitagent/polkitagent.h>
 
-static char *shell_escape(char *cmd);
+static char *shell_escape(char *str);
 static char *get_password(char *cmd);
 
 typedef struct {
