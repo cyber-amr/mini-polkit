@@ -12,8 +12,8 @@
 #include <polkit/polkit.h>
 #include <polkitagent/polkitagent.h>
 
-static char *shell_escape(char *str);
-static char *get_password(char *cmd);
+static char *shell_escape(const char *str);
+static char *get_password(const char *cmd);
 
 typedef struct {
     PolkitAgentListener parent_instance;
@@ -85,8 +85,8 @@ on_completed(PolkitAgentSession *session,
     agent->session = NULL;
 }
 
-static char
-*get_cmd(int argc, char *argv[])
+static char *
+get_cmd(int argc, char *argv[])
 {
     if (argc < 2) return NULL;
 
@@ -94,7 +94,7 @@ static char
 }
 
 static char *
-shell_escape(char *str) {
+shell_escape(const char *str) {
     GString *escaped = g_string_new("");
 
     for (const char *p = str; *p; p++) {
@@ -109,8 +109,8 @@ shell_escape(char *str) {
     return g_string_free(escaped, FALSE);
 }
 
-static char
-*get_password(char *cmd)
+static char *
+get_password(const char *cmd)
 {
     if (!cmd) return NULL;
 
