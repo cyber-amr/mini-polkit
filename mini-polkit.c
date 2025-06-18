@@ -54,6 +54,7 @@ on_request(PolkitAgentSession *session,
         if (password) {
             polkit_agent_session_response(session, password);
             memset(password, 0, strlen(password));
+            g_free(password);
         } else {
             polkit_agent_session_response(session, "");
         }
@@ -235,7 +236,7 @@ int main(int argc, char *argv[])
     if (!subject) {
         fprintf(stderr, "Failed to get session: %s\n", error->message);
         g_error_free(error);
-        free(cmd);
+        g_free(cmd);
         g_object_unref(agent);
         return 1;
     }
@@ -245,7 +246,7 @@ int main(int argc, char *argv[])
                                        subject, NULL, NULL, &error)) {
         fprintf(stderr, "Failed to register agent: %s\n", error->message);
         g_error_free(error);
-        free(cmd);
+        g_free(cmd);
         g_object_unref(agent);
         g_object_unref(subject);
         return 1;
