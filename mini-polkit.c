@@ -125,6 +125,9 @@ get_password(const char *cmd)
         password = NULL;
     } else {
         password[strcspn(password, "\n")] = '\0';
+        gchar *g_password = g_strdup(password);
+        free(password);
+        password = g_password;
     }
 
     pclose(fp);
