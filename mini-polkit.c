@@ -34,9 +34,22 @@ static GMainLoop *loop;
 
 G_DEFINE_TYPE(SimpleAgent, simple_agent, POLKIT_AGENT_TYPE_LISTENER);
 
+static gint quit_flag = 0;
+
+static gboolean quit_main_loop(gpointer data) {
+    (void)data;
+    if (g_atomic_int_get(&quit_flag) && loop != NULL) {
+        g_main_loop_quit(loop);
+    }
+    return G_SOURCE_REMOVE;
+}
+
 static void handle_signal(int sig) {
     (void)sig;
-    g_main_loop_quit(loop);
+    if (!g_atomic_int_get(&quit_flag)) {
+        g_atomic_int_set(&quit_flag, 1);
+        g_idle_add(quit_main_loop, NULL);
+    }
 }
 
 static void
