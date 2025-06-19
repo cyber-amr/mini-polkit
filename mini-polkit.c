@@ -244,8 +244,8 @@ int main(int argc, char *argv[])
             "  %s \"zenity --password --title='{{MESSAGE}}'\"\n"
             "  %s \"echo '{{MESSAGE}}' | dmenu -p 'Password:'\"\n\n"
             "Note:\n"
-            "  Should be run in an X session (e.g. from ~/.xinitrc)\n"
-            "  Should also run as a background processs using &\n"
+            "  Should auto start once (e.g. from ~/.xinitrc or ~/.bash_profile)\n"
+            "  Should also run as a background processs (e.g. using &)\n"
             "  Example:\n"
             "    %s \"rofi -dmenu -password -p '{{MESSAGE}}'\" &\n",
             argv[0], argv[0], argv[0], argv[0], argv[0]
