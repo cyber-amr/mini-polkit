@@ -161,10 +161,11 @@ get_password(const char *cmd)
 
         gchar *g_password = g_malloc(pass_len + 1);
         if (mlock(g_password, pass_len + 1) != 0) {
+            explicit_bzero(g_password, pass_len + 1);
+            g_free(g_password);
             explicit_bzero(password, len);
             munlock(password, len);
             free(password);
-            g_free(g_password);
             pclose(fp);
             return NULL;
         }
