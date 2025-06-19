@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 #include <glib.h>
 #include <glib/gmem.h>
 #include <polkit/polkit.h>
@@ -57,7 +58,8 @@ on_request(PolkitAgentSession *session,
         password = get_password(full_cmd);
         if (password) {
             polkit_agent_session_response(session, password);
-            memset(password, 0, strlen(password));
+            explicit_bzero(password, strlen(password));
+            munlock(password, strlen(password));
             g_free(password);
         } else {
             polkit_agent_session_response(session, "");
@@ -128,11 +130,35 @@ get_password(const char *cmd)
     size_t len = 0;
 
     if (getline(&password, &len, fp) == -1 || !password || strlen(password) == 0) {
-        free(password);
+        if (password) {
+            explicit_bzero(password, len);
+            free(password);
+        }
         password = NULL;
     } else {
+        if (mlock(password, strlen(password)) != 0) {
+            explicit_bzero(password, strlen(password));
+            free(password);
+            pclose(fp);
+            return NULL;
+        }
+
         password[strcspn(password, "\n")] = '\0';
-        gchar *g_password = g_strdup(password);
+        size_t pass_len = strlen(password);
+
+        gchar *g_password = g_malloc(pass_len + 1);
+        if (mlock(g_password, pass_len + 1) != 0) {
+            explicit_bzero(password, len);
+            munlock(password, len);
+            free(password);
+            g_free(g_password);
+            pclose(fp);
+            return NULL;
+        }
+
+        strcpy(g_password, password);
+        explicit_bzero(password, len);
+        munlock(password, len);
         free(password);
         password = g_password;
     }
