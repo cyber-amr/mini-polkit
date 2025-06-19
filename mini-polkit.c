@@ -156,7 +156,7 @@ get_password(const char *cmd)
             return NULL;
         }
 
-        strcpy(g_password, password);
+        memcpy(g_password, password, pass_len + 1);
         explicit_bzero(password, len);
         munlock(password, len);
         free(password);
