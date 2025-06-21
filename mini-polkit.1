@@ -19,6 +19,25 @@ Use
 .B {{MESSAGE}}
 placeholder to display the polkit message in your prompt.
 
+.SH AUTOSTART
+Add the command to:
+.PP
+Your preferable startup script:
+.IP \(bu 2
+.B ~/.xinitrc
+.IP \(bu 2
+.B ~/.bash_profile
+.IP \(bu 2
+etc..
+.PP
+User service:
+.IP \(bu 2
+.B systemd:
+~/.config/systemd/user/mini-polkit.service
+.IP \(bu 2
+.B runit:
+~/.local/share/sv/mini-polkit/run
+
 .SH EXAMPLES
 .TP
 .B rofi:
