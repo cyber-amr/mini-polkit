@@ -6,11 +6,10 @@ mini-polkit \- minimal polkit authentication agent
 .I prompt-command
 .SH DESCRIPTION
 .B mini-polkit
-is a minimal PolicyKit authentication agent.
-It spawns an external command to prompt for passwords during authentication requests from polkit-enabled applications.
+is a minimal PolicyKit authentication agent written in C (~300 LOC).
+It provides secure authentication for polkit-enabled applications by spawning external prompt commands.
 
-The agent runs as a background service and registers itself with the polkit daemon.
-It handles authentication requests by executing the specified prompt command and passing the entered password to polkit for verification.
+The agent registers with the polkit daemon and handles authentication requests by executing the specified prompt command, reading the password from stdout, and securely passing it to polkit via D-Bus.
 
 .SH ARGUMENTS
 .TP
