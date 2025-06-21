@@ -15,8 +15,10 @@ It handles authentication requests by executing the specified prompt command and
 .SH ARGUMENTS
 .TP
 .I prompt-command
-External command used to prompt for passwords. Must read from stdin and output password to stdout.
-Common choices include dmenu, rofi, zenity, or any custom script.
+External command to prompt for passwords. Must output password to stdout.
+Use
+.B {{MESSAGE}}
+placeholder to display the polkit message in your prompt.
 
 .SH SETUP
 Start the agent in your session initialization:
@@ -30,19 +32,19 @@ mini-polkit "rofi -dmenu -password -p 'Password:'" &
 .SH EXAMPLES
 .TP
 .B rofi:
-mini-polkit rofi -dmenu -password -p 'Password:'
+mini-polkit "rofi -dmenu -password -p '{{MESSAGE}}'"
 .TP
 .B dmenu (native):
-mini-polkit "echo 'Authentication' | dmenu -p 'Password:'"
+mini-polkit "echo '{{MESSAGE}}' | dmenu -p 'Password:'"
 .TP
 .B dmenu (password patch):
-mini-polkit dmenu -P -p 'Password:'
+mini-polkit "dmenu -P -p 'Password:'"
 .TP
 .B zenity:
-mini-polkit zenity --password --title='Authentication'
+mini-polkit "zenity --password --title='{{MESSAGE}}'"
 .TP
 .B custom script:
-mini-polkit "/usr/local/bin/my-password-prompt"
+mini-polkit "/usr/local/bin/my-prompt"
 
 .SH SIGNALS
 .TP
