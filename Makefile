@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c99 $(shell pkg-config --cflags polkit-agent-1 glib-2.0)
 LDFLAGS = $(shell pkg-config --libs polkit-agent-1 glib-2.0)
 
-VERSION = 1.0
+VERSION = 1.0.0
 
 MANDIR = $(DESTDIR)/usr/share/man
 
