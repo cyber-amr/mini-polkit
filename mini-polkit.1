@@ -46,6 +46,17 @@ mini-polkit "zenity --password --title='{{MESSAGE}}'"
 .B custom script:
 mini-polkit "/usr/local/bin/my-prompt"
 
+.SH SECURITY
+Password is securely handled:
+.IP \(bu 2
+Passed to PolicyKit via D-Bus only
+.IP \(bu 2
+Wiped from memory after use
+.IP \(bu 2
+No command-line exposure
+.IP \(bu 2
+Your prompt tool must handle input securely
+
 .SH SIGNALS
 .TP
 .B SIGTERM
