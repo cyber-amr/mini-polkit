@@ -58,7 +58,7 @@ You can autostart it via `.xinitrc`, `.bash_profile`, `systemd` or whatever you 
 ```sh
 git clone https://github.com/cyber-amr/mini-polkit.git
 cd mini-polkit
-doas make install
+sudo make install
 ```
 
 ---
